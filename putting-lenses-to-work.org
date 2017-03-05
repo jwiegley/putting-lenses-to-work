@@ -1,0 +1,91 @@
+#+TITLE:  Putting Lenses to Work
+#+AUTHOR: John Wiegley
+#+EMAIL:  johnw@newartisans.com
+#+DATE:   7 Apr 2017
+
+#+DESCRIPTION: A non-theory presentation of using lenses to get stuff done
+#+KEYWORDS: lens haskell functional programming
+#+LANGUAGE: en
+
+\setbeamertemplate{footline}{}
+\setbeamerfont{block body}{size=\small}
+\definecolor{orchid}{RGB}{134, 134, 220}
+\setbeamercolor{block title}{fg=white,bg=orchid}
+\setbeamercolor{bgcolor}{fg=white,bg=blue}
+
+* Overview
+** Workshop overview
+1. Basic math definitions
+2. Algebras and laws
+3. Working with proofs
+4. Category theory & Functors
+5. Monads
+*** note                                                                                 :B_note:
+:PROPERTIES:
+:BEAMER_env: note
+:END:
+Give an introduction of myself and my background here, and ask whether people
+in the audience have much experience with the intersection between math and
+programming.
+* Lenses
+* Records
+* Pointed types
+* Computed points
+* Maps
+* Products and Sums
+* Prisms
+* State and Zoom
+** use and preuse
+* Indexed Lenses
+* Traversals
+* Folds
+* Monoids and Lenses
+* Getters and Setters
+* ALens and Lenses as Values
+* lens-aeson
+* thyme
+* Isos
+* Colophon
+
+#+STARTUP: beamer
+#+STARTUP: content fninline hidestars
+
+#+LaTeX_CLASS: beamer
+#+LaTeX_CLASS_OPTIONS: [utf8x,notes,17pt]
+
+#+BEAMER_THEME: [height=16mm] Rochester
+#+BEAMER_COLOR: seahorse
+
+#+OPTIONS:   H:2 toc:nil
+
+#+BEAMER_HEADER: \setbeamertemplate{navigation symbols}{}
+#+BEAMER_HEADER: \usepackage{courier}
+#+BEAMER_HEADER: \usepackage{helvet}
+#+BEAMER_HEADER: \usepackage{listings}
+#+BEAMER_HEADER: \usepackage{mathtools}
+#+BEAMER_HEADER: \usepackage{pdfcomment}
+
+#+BEAMER_HEADER: \SetUnicodeOption{mathletters}
+#+BEAMER_HEADER: \DeclareUnicodeCharacter{952}{\theta}
+
+#+BEAMER_HEADER: \lstset{
+#+BEAMER_HEADER:     keywordstyle=\color{blue}
+#+BEAMER_HEADER:   , basicstyle=\ttfamily\small
+#+BEAMER_HEADER:   , commentstyle={}
+#+BEAMER_HEADER:   , columns=fullflexible
+#+BEAMER_HEADER:   , showstringspaces=false
+#+BEAMER_HEADER:   , keepspaces=true=
+#+BEAMER_HEADER:   , breaklines=true
+#+BEAMER_HEADER:   , escapeinside={\%*}{*)},
+#+BEAMER_HEADER:   }
+
+#+BEAMER_HEADER: \newcommand{\head}[1]{\begin{center}
+#+BEAMER_HEADER: \vspace{13mm}\hspace{-1mm}\Huge{{#1}}
+#+BEAMER_HEADER: \end{center}}
+
+#+BEAMER_HEADER: \renewcommand{\note}[1]{\marginnote{\pdfcomment[icon=note]{#1}}}
+
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+
+#+COLUMNS: %20ITEM %13BEAMER_env(Env) %6BEAMER_envargs(Args) %4BEAMER_col(Col) %7BEAMER_extra(Extra)
