@@ -26,41 +26,13 @@
 
 - Applied to the right problem, lenses are indispensible!
 * Lenses & Records
-** Lenses
-Lenses let us "address" one member of a product, collection, or even computed
-part of a value
 ** Products
 *** Get
-#+begin_src haskell
-λ> (1,2,3) ^. _2
-2
-#+end_src
+### lenses.products.view.operator
 *** Set
 #+begin_src haskell
-λ> (1,2,3) & _2 .~ 20
-(1,20,3)
-#+end_src
-** Collections
-*** Get
-#+begin_src haskell
-λ> [1,2,3] ^? ix 1
-Just 2
-#+end_src
-*** Set
-#+begin_src haskell
-λ> [1,2,3] & ix 1 .~ 20
-[1,20,3]
-#+end_src
-** Computations
-*** Get
-#+begin_src haskell
-λ> 31415926 ^? digit 2
-Just 4
-#+end_src
-*** Set
-#+begin_src haskell
-λ> 31415926 & digit 2 .~ 8
-31815926
+(1,2,3) & _2 .~ 20
+    ==> (1,20,3)
 #+end_src
 ** Records
 - Most tutorials start with records
@@ -83,11 +55,11 @@ makeLenses ''Record
 #+end_src
 ** Records
 #+begin_src haskell
-test1 :: Record -> Int
-test1 r = r ^. field1
+ex1 :: Record -> Int
+ex1 r = r ^. field1
 
-test2 :: Record -> Record
-test2 r = r & field1 .~ 1
+ex2 :: Record -> Record
+ex2 r = r & field1 .~ 1
 #+end_src
 ** Writing lenses
 #+begin_src haskell
@@ -103,9 +75,37 @@ mylens k (p1, p2) = do
 #+end_src
 * Prisms & ADTs
 ** Prisms
-** Maps
-** lens-aeson
+** ADTs
+* Traversals
+** Traversals
+** Collections
+*** Get
+#+begin_src haskell
+[1,2,3] ^? ix 1
+    ==> Just 2
+#+end_src
+*** Set
+#+begin_src haskell
+[1,2,3] & ix 1 .~ 20
+    ==> [1,20,3]
+#+end_src
+** Computations
+*** Get
+#+begin_src haskell
+31415926 ^? digit 2
+    ==> Just 4
+#+end_src
+*** Set
+#+begin_src haskell
+31415926 & digit 2 .~ 8
+    ==> 31815926
+#+end_src
+** Monoids
+** partsOf
+** biplate
+** Folds
 * Maps
+** Maps
 ** at
 ** non
 ** failing
@@ -113,17 +113,12 @@ mylens k (p1, p2) = do
 ** use
 ** preuse
 ** zoom
-* Traversals
-** Traversals
-** Monoids
-** partsOf
-** biplate
-** Folds
 * Other lenses
 ** ALens, LensLike
 ** Fold, Getter, Setter
 ** Indexed lenses
 ** Computational lenses
+** lens-aeson
 ** thyme
 
 

@@ -1,0 +1,24 @@
+name:          putting-lenses-to-work
+version:       0.1.0.0
+synopsis:      Some practical examples of using lens
+homepage:      https://github.com/jwiegley/putting-lenses-to-work
+license:       BSD3
+license-file:  LICENSE
+author:        John Wiegley
+maintainer:    johnw@newartisans.com
+category:      Development
+build-type:    Simple
+cabal-version: >=1.10
+
+test-suite putting-lenses-to-work
+  default-language: Haskell98
+  type:    exitcode-stdio-1.0
+  main-is: Main.hs
+  hs-source-dirs: test
+  build-depends:      
+      base         >= 4.9.1.0
+    , lens         >= 4.15.1
+    , lens-aeson   >= 1.0.0.5
+    , thyme        >= 0.3.5.5
+    , text         >= 1.2.2.1
+    , hspec        >= 2.4.3
