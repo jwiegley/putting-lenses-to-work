@@ -1,7 +1,7 @@
 #+TITLE:  Putting Lenses to Work
 #+AUTHOR: John Wiegley
 #+EMAIL:  johnw@newartisans.com
-#+DATE:   7 Apr 2017
+#+DATE:   8 Apr 2017
 
 #+DESCRIPTION: A non-theory presentation of using lenses to get stuff done
 #+KEYWORDS: lens haskell functional programming
@@ -14,37 +14,119 @@
 \setbeamercolor{bgcolor}{fg=white,bg=blue}
 
 * Overview
-** Workshop overview
-1. Basic math definitions
-2. Algebras and laws
-3. Working with proofs
-4. Category theory & Functors
-5. Monads
-*** note                                                                                 :B_note:
-:PROPERTIES:
-:BEAMER_env: note
-:END:
-Give an introduction of myself and my background here, and ask whether people
-in the audience have much experience with the intersection between math and
-programming.
-* Lenses
-* Records
-* Pointed types
-* Computed points
+** Overview
+1. Lenses & Records
+2. Prisms & ADTs
+3. Maps
+4. State
+5. Traversals
+6. Other lenses
+** Introduction
+- Non-theory presentation of how we use lenses at BAE Systems
+
+- Applied to the right problem, lenses are indispensible!
+* Lenses & Records
+** Lenses
+Lenses let us "address" one member of a product, collection, or even computed
+part of a value
+** Products
+*** Get
+#+begin_src haskell
+λ> (1,2,3) ^. _2
+2
+#+end_src
+*** Set
+#+begin_src haskell
+λ> (1,2,3) & _2 .~ 20
+(1,20,3)
+#+end_src
+** Collections
+*** Get
+#+begin_src haskell
+λ> [1,2,3] ^? ix 1
+Just 2
+#+end_src
+*** Set
+#+begin_src haskell
+λ> [1,2,3] & ix 1 .~ 20
+[1,20,3]
+#+end_src
+** Computations
+*** Get
+#+begin_src haskell
+λ> 31415926 ^? digit 2
+Just 4
+#+end_src
+*** Set
+#+begin_src haskell
+λ> 31415926 & digit 2 .~ 8
+31815926
+#+end_src
+** Records
+- Most tutorials start with records
+- Arguably the least interesting use of lens
+- In shallow use, barely different from regular access and update syntax
+** Records
+#+begin_src haskell
+{-# LANGUAGE TemplateHaskell #-}
+
+module Lenses where
+
+import Control.Lens
+
+data Record = Record
+    { _field1 :: Int
+    , _field2 :: Int
+    }
+
+makeLenses ''Record
+#+end_src
+** Records
+#+begin_src haskell
+test1 :: Record -> Int
+test1 r = r ^. field1
+
+test2 :: Record -> Record
+test2 r = r & field1 .~ 1
+#+end_src
+** Writing lenses
+#+begin_src haskell
+{-# LANGUAGE ApplicativeDo #-}
+
+mylens :: Lens' (Int, Int) Int
+mylens k (p1, p2) = do
+  -- 'k' is a function from Int -> f Int
+  -- mylens itself is a function
+  --     from (Int, Int) -> f (Int, Int)
+  p1' <- k p1
+  return (p1', p2)
+#+end_src
+* Prisms & ADTs
+** Prisms
+** Maps
+** lens-aeson
 * Maps
-* Products and Sums
-* Prisms
-* State and Zoom
-** use and preuse
-* Indexed Lenses
+** at
+** non
+** failing
+* State
+** use
+** preuse
+** zoom
 * Traversals
-* Folds
-* Monoids and Lenses
-* Getters and Setters
-* ALens and Lenses as Values
-* lens-aeson
-* thyme
-* Isos
+** Traversals
+** Monoids
+** partsOf
+** biplate
+** Folds
+* Other lenses
+** ALens, LensLike
+** Fold, Getter, Setter
+** Indexed lenses
+** Computational lenses
+** thyme
+
+
 * Colophon
 
 #+STARTUP: beamer
@@ -61,29 +143,33 @@ programming.
 #+BEAMER_HEADER: \setbeamertemplate{navigation symbols}{}
 #+BEAMER_HEADER: \usepackage{courier}
 #+BEAMER_HEADER: \usepackage{helvet}
-#+BEAMER_HEADER: \usepackage{listings}
-#+BEAMER_HEADER: \usepackage{mathtools}
-#+BEAMER_HEADER: \usepackage{pdfcomment}
 
+#+BEAMER_HEADER: \usepackage{pdfcomment}
+#+BEAMER_HEADER: \renewcommand{\note}[1]{\marginnote{\pdfcomment[icon=Note]{#1}}}
+
+#+BEAMER_HEADER: \usepackage{mathtools}
 #+BEAMER_HEADER: \SetUnicodeOption{mathletters}
 #+BEAMER_HEADER: \DeclareUnicodeCharacter{952}{\theta}
 
-#+BEAMER_HEADER: \lstset{
-#+BEAMER_HEADER:     keywordstyle=\color{blue}
-#+BEAMER_HEADER:   , basicstyle=\ttfamily\small
-#+BEAMER_HEADER:   , commentstyle={}
-#+BEAMER_HEADER:   , columns=fullflexible
-#+BEAMER_HEADER:   , showstringspaces=false
-#+BEAMER_HEADER:   , keepspaces=true=
-#+BEAMER_HEADER:   , breaklines=true
-#+BEAMER_HEADER:   , escapeinside={\%*}{*)},
+#+BEAMER_HEADER: \usepackage{minted}
+
+# #+name: setup-minted
+# #+begin_src emacs-lisp :exports both :results silent
+# (setq org-latex-listings 'minted)
+# (setq org-latex-minted-options
+#       '(("fontsize" "\\footnotesize")
+#         ("linenos" "true")))
+# #+end_src
+
+#+BEAMER_HEADER: \let\svthefootnote\thefootnote
+#+BEAMER_HEADER: \newcommand\blankfootnote[1]{%
+#+BEAMER_HEADER:   \let\thefootnote\relax\footnotetext{#1}%
+#+BEAMER_HEADER:   \let\thefootnote\svthefootnote%
 #+BEAMER_HEADER:   }
 
 #+BEAMER_HEADER: \newcommand{\head}[1]{\begin{center}
 #+BEAMER_HEADER: \vspace{13mm}\hspace{-1mm}\Huge{{#1}}
 #+BEAMER_HEADER: \end{center}}
-
-#+BEAMER_HEADER: \renewcommand{\note}[1]{\marginnote{\pdfcomment[icon=note]{#1}}}
 
 #+SELECT_TAGS: export
 #+EXCLUDE_TAGS: noexport
