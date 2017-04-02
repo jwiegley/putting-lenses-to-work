@@ -9,8 +9,7 @@
       (while parts
         (re-search-forward
          (rx-to-string `(: word-start ,(if (cdr parts) "describe" "it")
-                           space
-                           ?\" ,(car parts) ?\")))
+                           space ?\" ,(car parts) ?\")))
         (forward-line)
         (setq parts (cdr parts))))
 

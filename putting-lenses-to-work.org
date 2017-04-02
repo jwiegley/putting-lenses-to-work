@@ -15,19 +15,19 @@
 
 * Overview
 ** Overview
-1. Lens: Tuple, Records
-2. Prism: Either, ADTs
+1. Lens
+2. Prism
 3. Traversal & Fold
 4. Map
 5. State
-6. Advanced
+6. Other
 ** Introduction
 - Practical use of lenses, inspired by work
 
 - Applied to the right problem, they are invaluable!
-* Lenses
+* Lens
 ** Lens
-Lenses let us "address" an element in a structure whose position always exists
+Lenses address some part of a "structure" that always exists
 ** Tuple
 *** view (^.)
 ### Lens.Tuple.view.operator
@@ -142,37 +142,53 @@ set        & \verb|v & l .~ x| \\
 (applyA)   & \verb|v & l %%~ f|
 \end{tabular}
 \end{center}
-* Prisms
+* Prism
 ** Prism
-Prisms let us "address" an element whose position in a structure *may* exist
+Prims address some part of a "structure" that *may* exist
 ** ADTs
-* Traversals & Folds
+* Traversal & Fold
 ** Traversals
-Traversals let us "address" many elements whose positions in a structure *may*
-exist
+Traversals address many parts of a "structure" that may exist
 ** Collections
-*** Get
+*** preview
 #+begin_src haskell
 [1,2,3] ^? ix 1
     ==> Just 2
 #+end_src
-*** Set
+*** set
+:PROPERTIES:
+:BEAMER_act: <2->
+:END:
 #+begin_src haskell
 [1,2,3] & ix 1 .~ 20
     ==> [1,20,3]
 #+end_src
 ** Computations
-*** Get
+*** preview
 #+begin_src haskell
 31415926 ^? digit 2
     ==> Just 4
 #+end_src
-*** Set
+*** set
+:PROPERTIES:
+:BEAMER_act: <2->
+:END:
 #+begin_src haskell
 31415926 & digit 2 .~ 8
     ==> 31815926
 #+end_src
 ** Monoids
+- "Viewing" a traversal combines the elements using =Monoid=
+- =^..= turns each element into a singleton list, so the =Monoid= result is a
+  list of the elements
+** Monoids
+*** Obtaining a list of elements
+### Traversal.List.toListOf
+*** Using the Monoid
+:PROPERTIES:
+:BEAMER_act: <2->
+:END:
+### Traversal.List.monoid
 ** Folds
 \begin{center}
 \small
@@ -228,7 +244,7 @@ preview  & \verb|v ^? l|     \\
 (demand) & \verb|v ^?! l|
 \end{tabular}
 \end{center}
-* Maps
+* Map
 ** Maps
 ** at
 ** non
@@ -237,14 +253,18 @@ preview  & \verb|v ^? l|     \\
 ** State
 *** use
 ### State.use
-** State
 *** uses
+:PROPERTIES:
+:BEAMER_act: <2->
+:END:
 ### State.uses
 ** State
 *** preuse
 ### State.preuse
-** State
 *** preuses
+:PROPERTIES:
+:BEAMER_act: <2->
+:END:
 ### State.preuses
 ** State
 *** set
@@ -264,7 +284,7 @@ preview  & \verb|v ^? l|     \\
 ** State
 *** Multiple set
 ### State.multi-set
-* Advanced
+* Other
 ** partsOf
 ** biplate
 ** Things we didn't cover
