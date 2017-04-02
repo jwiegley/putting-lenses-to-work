@@ -30,8 +30,12 @@
 (defun extract-code-blocks ()
   (goto-char (point-min))
   (while (re-search-forward "^### \\(.+\\)$" nil t)
-    (let ((name (match-string 1)))
+    (let ((name (match-string 1))
+          (line (line-number-at-pos (match-end 0))))
       (delete-region (match-beginning 0) (match-end 0))
       (insert "#+begin_src haskell" ?\n)
-      (insert (extract-code name))
+      (condition-case err
+          (insert (extract-code name))
+        (error
+         (error "Failed to locate test for %s: %s" name err)))
       (insert "#+end_src"))))

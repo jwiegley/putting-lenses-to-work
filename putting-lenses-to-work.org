@@ -15,29 +15,39 @@
 
 * Overview
 ** Overview
-1. Lenses & Records
-2. Prisms & ADTs
-3. Maps
-4. State
-5. Traversals
-6. Other lenses
+1. Lens: Tuple, Records
+2. Prism: Either, ADTs
+3. Traversal & Fold
+4. Map
+5. State
+6. Advanced
 ** Introduction
-- Non-theory presentation of how we use lenses at BAE Systems
+- Practical use of lenses, inspired by work
 
-- Applied to the right problem, lenses are indispensible!
-* Lenses & Records
-** Products
-*** Get
-### lenses.products.view.operator
-*** Set
-#+begin_src haskell
-(1,2,3) & _2 .~ 20
-    ==> (1,20,3)
-#+end_src
+- Applied to the right problem, they are invaluable!
+* Lenses
+** Lens
+Lenses let us "address" an element in a structure whose position always exists
+** Tuple
+*** view (^.)
+### Lens.Tuple.view.operator
+*** view
+:PROPERTIES:
+:BEAMER_act: <2->
+:END:
+### Lens.Tuple.view.function
+** Tuple
+*** set (.~)
+### Lens.Tuple.set.operator
+*** set
+:PROPERTIES:
+:BEAMER_act: <2->
+:END:
+### Lens.Tuple.set.function
 ** Records
-- Most tutorials start with records
-- Arguably the least interesting use of lens
-- In shallow use, barely different from regular access and update syntax
+- Possibly the least interesting use of =lens=
+- For shallow use, barely different from access and update syntax
+- "Distinguished products"
 ** Records
 #+begin_src haskell
 {-# LANGUAGE TemplateHaskell #-}
@@ -47,37 +57,99 @@ module Lenses where
 import Control.Lens
 
 data Record = Record
-    { _field1 :: Int
-    , _field2 :: Int
-    }
-
+  { _field1 :: Int
+  , _field2 :: Int
+  }
 makeLenses ''Record
 #+end_src
+** Records (Classy)
+=makeClassy= is an alternate lens builder that defines lenses as methods of a
+typeclass, making your record an instance of that class
+** Records (Classy)
+#+begin_src haskell
+{-# LANGUAGE TemplateHaskell #-}
+
+module Lenses (Record, HasRecord(..)) where
+
+import Control.Lens
+
+data Record = Record
+  { _field1 :: Int
+  , _field2 :: Int
+  }
+makeClassy ''Record
+#+end_src
+** Records (Classy)
+#+begin_src haskell
+class HasRecord r where
+  record :: Lens' r Record
+  field1 :: Lens' r Int
+  field2 :: Lens' r Int
+  {-# MINIMAL record #-}
+
+instance HasRecord Record where
+  ...
+  field1 f (Record x y) = ...
+  ...
+#+end_src
 ** Records
+*** view
+### Lens.records.view
+*** set
+:PROPERTIES:
+:BEAMER_act: <2->
+:END:
+### Lens.records.set
+** Records
+Record lenses become quite useful when structure is deep:
+** Records
+*** With lens
 #+begin_src haskell
-ex1 :: Record -> Int
-ex1 r = r ^. field1
-
-ex2 :: Record -> Record
-ex2 r = r & field1 .~ 1
+v & foo.bar.baz +~ 1
 #+end_src
-** Writing lenses
+** Records
+*** Without lens
 #+begin_src haskell
-{-# LANGUAGE ApplicativeDo #-}
-
-mylens :: Lens' (Int, Int) Int
-mylens k (p1, p2) = do
-  -- 'k' is a function from Int -> f Int
-  -- mylens itself is a function
-  --     from (Int, Int) -> f (Int, Int)
-  p1' <- k p1
-  return (p1', p2)
+let f = _foo v
+    b = _bar f
+    z = _baz b in
+v { _foo = f {
+      _bar = b {
+        _baz = z + 1 } } }
 #+end_src
-* Prisms & ADTs
-** Prisms
+** Writing lenses by hand
+#+begin_src haskell
+my_1 :: Lens' (Integer, Integer) Int
+my_1 f (p1, p2) =
+  (\n -> (toInteger n, p2))
+    <$> f (fromIntegral p1)
+
+my_1 :: Functor f
+     => (Int -> f Int)
+     -> (Integer, Integer)
+     -> f (Integer, Integer)
+#+end_src
+** Common operators
+\begin{center}
+\begin{tabular}{l|l}
+view       & \verb|v ^. l|     \\
+set        & \verb|v & l .~ x| \\
+(set Just) & \verb|v & l ?~ mx| \\
+(incr)     & \verb|v & l +~ n| \\
+(decr)     & \verb|v & l -~ n| \\
+(append)   & \verb|v & l <>~ x| \\
+(apply)    & \verb|v & l %~ f| \\
+(applyA)   & \verb|v & l %%~ f|
+\end{tabular}
+\end{center}
+* Prisms
+** Prism
+Prisms let us "address" an element whose position in a structure *may* exist
 ** ADTs
-* Traversals
+* Traversals & Folds
 ** Traversals
+Traversals let us "address" many elements whose positions in a structure *may*
+exist
 ** Collections
 *** Get
 #+begin_src haskell
@@ -101,26 +173,111 @@ mylens k (p1, p2) = do
     ==> 31815926
 #+end_src
 ** Monoids
-** partsOf
-** biplate
 ** Folds
+\begin{center}
+\small
+\begin{tabular}{lll}
+\verb|allOf|     & \verb|andOf|       & \verb|anyOf|    \\
+\verb|asumOf|    & \verb|concatMapOf| & \verb|concatOf| \\
+\verb|elemOf|    & \verb|findMOf|     & \verb|findOf|   \\
+\verb|firstOf|   & \verb|foldMapOf|   & \verb|foldOf|   \\
+\verb|foldl1Of|  & \verb|foldl1Of'|   & \verb|foldlMOf| \\
+\verb|foldlOf|   & \verb|foldlOf'|    & \verb|foldr1Of| \\
+\verb|foldr1Of'| & \verb|foldrMOf|    & \verb|foldrOf|
+\end{tabular}
+\end{center}
+** More Folds
+\begin{center}
+\small
+\begin{tabular}{lll}
+\verb|foldrOf'|     & \verb|forMOf_|     & \verb|forOf_|    \\
+\verb|lastOf|       & \verb|lengthOf|    & \verb|lookupOf|  \\
+\verb|mapMOf_|      & \verb|maximumByOf| & \verb|maximumOf| \\
+\verb|minimumByOf|  & \verb|minimumOf|   & \verb|msumOf|    \\
+\verb|noneOf|       & \verb|notElemOf|   & \verb|notNullOf| \\
+\verb|nullOf|       & \verb|orOf|        & \verb|productOf| \\
+\verb|sequenceAOf_| & \verb|sequenceOf_| & \verb|sumOf|     \\
+\verb|toListOf|     & \verb|traverseOf_| & 
+\end{tabular}
+\end{center}
+** Vocabulary review
+\begin{center}
+\small
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+  \textbf{Name} &
+  \textbf{Read} &
+  \textbf{Write} &
+  \textbf{Targets} &
+  \textbf{Example} \\ \hline
+Getter    & y    &       & 1       & \verb|to f| \\ 
+Setter    &      & y?    & 0*      & \verb|mapped| \\ 
+Lens      & y    & y     & 1       & \verb|_1| \\ 
+Iso       & y    & y     & 1       & \verb|lazy| \\ \hline
+Prism     & y?   & y?    & 1?      & \verb|only| \\ \hline
+Fold      & y*   &       & 0*      & \verb|folded| \\ 
+Traversal & y*   & y*    & 0*      & \verb|traverse| \\ 
+\hline
+\end{tabular}
+\end{center}
+** Common operators
+\begin{center}
+\begin{tabular}{l|l}
+toListOf & \verb|v ^.. l|    \\
+preview  & \verb|v ^? l|     \\
+(demand) & \verb|v ^?! l|
+\end{tabular}
+\end{center}
 * Maps
 ** Maps
 ** at
 ** non
 ** failing
 * State
-** use
-** preuse
-** zoom
-* Other lenses
-** ALens, LensLike
-** Fold, Getter, Setter
-** Indexed lenses
-** Computational lenses
-** lens-aeson
-** thyme
-
+** State
+*** use
+### State.use
+** State
+*** uses
+### State.uses
+** State
+*** preuse
+### State.preuse
+** State
+*** preuses
+### State.preuses
+** State
+*** set
+### State.set
+** State
+*** over
+### State.over
+** set (State
+*** set (monadic)
+### State.setM
+** State
+*** zoom
+### State.zoom
+** Lens
+*** Multiple set
+### State.multi-set-plain
+** State
+*** Multiple set
+### State.multi-set
+* Advanced
+** partsOf
+** biplate
+** Things we didn't cover
+\begin{center}
+\small
+\begin{tabular}{lll}
+\verb|ALens|        & \verb|LensLike|   & \verb|Writer|  \\
+\verb|lens-action|  & \verb|lens-aeson| & \verb|thyme|    \\
+Indexed lenses      & Zippers           & Exceptions      \\
+Arrays              & Vectors           & \verb|FilePath| \\
+\verb|Numeric.Lens| &                   & 
+\end{tabular}
+\end{center}
 
 * Colophon
 

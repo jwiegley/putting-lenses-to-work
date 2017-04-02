@@ -15,10 +15,15 @@ test-suite putting-lenses-to-work
   type:    exitcode-stdio-1.0
   main-is: Main.hs
   hs-source-dirs: test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:      
-      base         >= 4.9.1.0
-    , lens         >= 4.15.1
-    , lens-aeson   >= 1.0.0.5
-    , thyme        >= 0.3.5.5
-    , text         >= 1.2.2.1
-    , hspec        >= 2.4.3
+      base                 >= 4.9.1.0
+    , bytestring           >= 0.10.8.1
+    , containers           >= 0.5.7.1
+    , hspec                >= 2.4.3
+    , lens                 >= 4.15.1
+    , lens-aeson           >= 1.0.0.5
+    , mtl                  >= 2.2.1
+    , text                 >= 1.2.2.1
+    , thyme                >= 0.3.5.5
+    , unordered-containers >= 0.2.8.0

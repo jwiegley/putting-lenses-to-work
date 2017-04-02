@@ -1,218 +1,618 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ViewPatterns #-}
 
 {-# OPTIONS_GHC -Wno-type-defaults #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
-module Main where
+module Main (Record, HasRecord(..),
+       digit, digit',
+       main) where
 
-import Control.Lens
-import Data.Char
-import Data.Text (Text)
--- import qualified Data.Text as T
-import Test.Hspec
+import           Control.Exception
+import           Control.Lens
+import           Control.Monad.State
+import           Data.Char
+import           Data.Data
+import           Data.Data.Lens
+import           Data.Function
+import           Data.List
+import           Data.Map (Map)
+import qualified Data.Map as M
+import           Data.Monoid
+import           Data.Set (Set)
+import qualified Data.Set as S
+import           Test.Hspec
 
-default (Int, Text)
+default (Int)
 
 data Record = Record
-    { _field1 :: Int
-    , _field2 :: Int
-    }
-    deriving (Eq, Show)
+  { _field1 :: Int
+  , _field2 :: Int
+  }
+  deriving (Eq, Show)
 
-makeLenses ''Record
+makeClassy ''Record
 
 data ADT = Alpha Int Int
          | Beta Record
-         | Gamma Text
-    deriving (Eq, Show)
+         | Gamma String
+  deriving (Eq, Show)
 
 makePrisms ''ADT
 
 digit :: Int -> Traversal' Int Int
 digit n f x = fmap (read . concat) $
-    sequence [show x] & ix n %%~ fmap show . f . read
+  sequence [show x] & ix n %%~ fmap show . f . read
 
 digit' :: Int -> Traversal' Int Int
 digit' n f x = fmap read $
-    show x & ix n %%~ fmap intToDigit . f . digitToInt
+  show x & ix n %%~ fmap intToDigit . f . digitToInt
+
+my_1 :: Lens' (Integer, Integer) Int
+my_1 f (p1, p2) =
+  (\n -> (toInteger n, p2)) <$> f (fromIntegral p1)
+
+my_1' :: Functor f
+      => (Int -> f Int)
+      -> (Integer, Integer)
+      -> f (Integer, Integer)
+my_1' f (p1, p2) =
+  (\n -> (toInteger n, p2)) <$> f (fromIntegral p1)
+
+newtype Bar = Bar
+  { _baz :: Int
+  } deriving (Eq, Show)
+makeLenses ''Bar
+
+newtype Foo = Foo
+  { _bar :: Bar
+  } deriving (Eq, Show)
+makeLenses ''Foo
+
+newtype Top = Top
+  { _foo :: Foo
+  } deriving (Eq, Show)
+makeLenses ''Top
+
+{-----------------------------------------------------------------------------}
 
 infixr 0 ==>
 (==>) :: (HasCallStack, Show a, Eq a) => a -> a -> Expectation
 (==>) = shouldBe
 
+infixr 0 /=>
+(/=>) :: (HasCallStack, Show a, Eq a) => a -> a -> Expectation
+(/=>) = shouldNotBe
+
+infixr 0 !!>
+(!!>) :: (HasCallStack, Exception e) => a -> Selector e -> Expectation
+v !!> s = pure v `shouldThrow` s
+
+bag :: Ord a => [a] -> Set a
+bag = S.fromList
+
+alist :: Ord k => [(k, a)] -> Map k a
+alist = M.fromList
+
+{-----------------------------------------------------------------------------}
+
 main :: IO ()
-main = hspec $ do
-    describe "lenses" $
-        describe "products" $ do
-            describe "view" $ do
-                it "function" $
-                    view _2 (1,2,3)
-                        ==> 2
+main = hspec $ parallel $ do
+  describe "Lens" $ do
+    describe "Tuple" lensTuple
+    describe "records" lensRecords
+    describe "Wrapped" isoWrapped
+    describe "custom" lensCustom
 
-                it "operator" $
-                    (1,2,3) ^. _2
-                        ==> 2
+  describe "Prism" $ do
+    describe "Either" prismEither
+    describe "ADTs" prismADTs
 
-            it "set" $
-                (1,2,3) & _2 .~ 20
-                    ==> (1,20,3)
+  describe "Traversal" $ do
+    describe "List" traversalList
+    describe "Set" traversalSet
+    describe "computations" traversalComputations
+    describe "similar" traversalSimilar
 
-    describe "prisms" $
-        describe "ADTs" $ do
-            it "preview" $
-                Alpha 10 20 ^? _Alpha._2
-                    ==> Just 20
+  describe "Map" traversalMap
 
-            it "setter" $
-                Alpha 10 20 & _Alpha._2 .~ 2
-                    ==> Alpha 10 2
+  describe "State" lensState
 
-            it "review" $
-                _Alpha # (30,40)
-                    ==> Alpha 30 40
+  describe "Advanced" $ do
+    describe "partsOf" advancedPartsOf
+    describe "view-patterns" advancedViewPatterns
 
-    describe "traversals" $ do
-        describe "collections" $ do
-            it "getter" $
-                [1,2,3] ^? ix 1
-                    ==> Just 2
+lensTuple :: Spec
+lensTuple = do
+  describe "view" $ do
+    it "operator" $
+      (1,2,3) ^. _2
+        ==> 2
 
-            it "setter" $
-                [1,2,3] & ix 1 .~ 20
-                    ==> [1,20,3]
+    it "function" $
+      view _2 (1,2,3)
+        ==> 2
 
-        describe "computations" $ do
-            it "getter" $
-                31415926 ^? digit 2
-                    ==> Just 4
+  describe "set" $ do
+    it "operator" $
+      (1,2,3) & _2 .~ 20
+        ==> (1,20,3)
 
-            it "setter" $
-                31415926 & digit 2 .~ 8
-                    ==> 31815926
+    it "function" $
+      set _2 20 (1,2,3)
+        ==> (1,20,3)
 
-        describe "records" $ do
-            it "getter" $
-                let r = Record 20 30 in
-                r ^. field1 ==> 20
+  it "both" $
+    (1,2) ^.. both
+      ==> [1,2]
 
-            it "setter" $
-                let r = Record 20 30 in
-                (r & field1 .~ 1) ==> Record 1 30
+  it "each" $
+    (1,2,3) ^.. each
+      ==> [1,2,3]
 
-    --     describe "Maps" $ do
+  it "alongside" $
+    ((1,2), (3,4)) ^. alongside _2 _1
+      ==> (2,3)
 
-    --     describe "ADTs" $ do
-    --     describe "Maps" $ do
+lensRecords :: Spec
+lensRecords = do
+  it "view" $
+    Record 20 30 ^. field1
+      ==> 20
 
--- >>> [1,2,3,4] & mapped +~ 1
--- [2,3,4,5]
+  it "set" $
+    Record 20 30 & field1 .~ 1
+      ==> Record 1 30
 
--- >>> let x = "{\"prefixes\": [{\"prefix\": \"blah\"}, {\"red\": \"blue\"}]}"
--- >>> x ^.. key "prefixes".values.filtered (has (key "red".only "blue"))
--- [Object (fromList [("red",String "blue")])]
+  it "over" $
+    Record 20 30 & field1 %~ mod 5
+      ==> Record 5 30
 
--- foo (view _2 -> Foo x) = print ("a foo! " ++ show x)
+  it "overA" $
+    Record 20 30 & field1
+      %%~ (pure :: a -> Identity a)
+      ==> pure (Record 20 30)
 
--- >>> has (ix 4) [1]
--- False
+  it "matches" $
+    let v = Top (Foo (Bar 100)) in
+    v & foo.bar.baz +~ 1
+      ==> let f = _foo v
+              b = _bar f
+              z = _baz b in
+          v { _foo = f {
+                _bar = b {
+                  _baz = z + 1 } } }
 
--- >>> has _Left (Left 5)
--- True
+isoWrapped :: Spec
+isoWrapped = do
+  it "view" $
+    Sum 5 ^. _Wrapped
+      ==> 5
 
--- >>> [] ^?! (ix 0 `failing` like 42)
--- 42
+  it "set" $
+    Sum 5 & _Wrapped +~ 10
+      ==> Sum 15
 
--- >>> ("Hello","Heinrich") & both %~ length
--- (5, 8)
+  it "over" $
+    Sum 30 & _Wrapped %~ (+10)
+      ==> Sum 40
 
--- >>> ("abcdef","ghijkl") ^. both
--- "abcdefghijkl"
+lensCustom :: Spec
+lensCustom = do
+  it "my_1" $
+    (100, 200) ^. my_1
+      ==> 100
 
--- >>> ("abcdef","ghijkl") % partsOf (both.traverse) .~ "hi there"
--- ("hi the","reijkl")
+  it "my_1-fails" $
+    (10000000000000000000000000000000000, 200)
+      ^. my_1
+      ==> 4003012203950112768
 
--- >>> ("hello","world") % partsOf (both.traverse) %~ reverse
--- ("dlrow","olleh")
+  it "my_1'" $
+    (100, 200) ^. my_1'
+      ==> 100
 
--- >>> ["a","bc","def"] % partsOf (traverse.traverse) %~ reverse
--- ["f","ed","cba"]
+prismEither :: Spec
+prismEither = do
+  describe "preview" $ do
+    it "present" $
+      Left 10 ^? _Left
+        ==> Just 10
 
--- >>> "Hello, World" % partsOf (traverse . filtered isAlpha) .~ "Howdy!!!"
--- "Howdy, !orld"
+    it "absent" $
+      (Right 10 :: Either Int Int) ^? _Left
+        ==> Nothing
 
--- >>> (`evalStateT` ("hello","world")) $ zoom both (get >>= lift . print)
--- "hello"
--- "world"
+  describe "setter" $ do
+    it "present" $
+      (Left 10 :: Either Int Int) & _Left .~ 2
+        ==> Left 2
 
--- >>> partsOf both %~ reverse $ ('a','b')
--- ('b','a')
+    it "absent" $
+      (Left 10 :: Either Int Int) & _Right .~ 2
+        ==> Left 10
 
--- >>> ((1,2), (3,4)) ^. alongside _2 _1
--- (2,3)
+  describe "over" $ do
+    it "present" $
+      (Left 10 :: Either Int Int)
+        & _Left %~ even
+        ==> Left True
 
--- >>> [(1,2,3,4),(5,6,7,8),(9,10,11,12)]^.folded._4.to Sum
--- Sum {getSum = 24}
+    it "absent" $
+      (Left 10 :: Either Int Int)
+        & _Right %~ even
+        ==> Left 10
 
--- >>> ("hello","there")^.._1.replicated 3.traverse.to toUpper
--- "HELLOHELLOHELLO"
+    it "failover" $
+      (Left 10 :: Either Int Int)
+        & failover _Right even
+        ==> (mzero :: Maybe (Either Int Bool))
 
--- >>> (("hello","world"),"!!!", 2, ()) ^..biplate :: [String]
--- ["hello","world","!!!"]
+  it "has" $
+    has _Left (Left 5)
+      ==> True
 
--- >>> (("hello","world"),"!!!", 2, ()) ^..biplate :: [Int]
--- [2]
+  it "isn't" $
+    isn't _Right (Left 5)
+      ==> True
 
--- >>> (("hello","world"),"!!!", 2, ()) & biplate %~ toUpper
--- (("HELLO","WORLD"),"!!!",2,())
+  it "review" $
+    _Alpha # (30,40)
+      ==> Alpha 30 40
 
--- >>> (("hello","world"),"!!!", 2, ()) & biplate._head %~ toUpper
--- (("Hello","World"),"!!!",2,())
+prismADTs :: Spec
+prismADTs = do
+  it "preview" $
+    Alpha 10 20 ^? _Alpha._2
+      ==> Just 20
 
--- λ> ("Hello", 10, 20, "World", ["!!!"]) & partsOf biplate %~ (reverse :: String -> String)
--- ("!!!dl",10,20,"roWol",["leH"])
+  describe "setter" $ do
+    it "present" $
+      Alpha 10 20 & _Alpha._2 .~ 2
+        ==> Alpha 10 2
 
--- >>> minimumOf both (1,2)
--- Just 1
+    it "absent" $
+      Alpha 10 20 & _Beta.field1 .~ 2
+        ==> Alpha 10 20
 
--- >>> rezip $ zipper ("hello","world") & down _1 & fromWithin traverse & focus .~ 'J' & farthest Control.Lens.right & focus .~ 'y'
--- ("Jelly","world")
+  it "has" $
+    has _Beta (Alpha 1 2)
+      ==> False
 
--- >>> sequenceAOf _3 (1,2,"hello")
--- [(1,2,'h'),(1,2,'e'),(1,2,'l'),(1,2,'l'),(1,2,'o')]
+  it "review" $
+    _Alpha # (30,40)
+      ==> Alpha 30 40
 
--- >>> singleton 4 & contains 2 .~ True
--- fromList [2,4]
+traversalList :: Spec
+traversalList = do
+  it "toListOf" $
+    [1,2,3] ^.. traverse
+      ==> [1,2,3]
 
--- λ> (1,2,3) ^.. each
--- [1,2,3]
+  it "view" $
+    [1,2,3] ^. traverse.to Sum
+      ==> Sum 6
 
--- >>> (1,2,3) & partsOf each %~ reverse
--- (3,2,1)
+  it "preview" $
+    [1,2,3] ^? ix 1
+      ==> Just 2
 
--- >>> "HelloWorld" & partsOf (traverse.filtered isLower) %~ reverse
--- "HdlroWolle"
+  it "has" $
+    has (ix 1) [1,2,3]
+      ==> True
 
--- >>> "HelloWorld" & partsOf (both.traverse.filtered isLower) %~ reverse
--- ("Hdlro", "Wolle")
+  it "set" $
+    [1,2,3] & ix 1 .~ 20
+      ==> [1,20,3]
 
--- >>> ("Hello","World",["Neat","!!!"]) & partsOf (biplate.filtered isLower) %~ (L.reverse :: String -> String)
--- ("Htaed","Wlroo",["Nlle","!!!"])
+  describe "only" $ do
+    it "success" $
+      5 ^? only 5
+        ==> Just ()
 
--- >>> "68656c6c6f20776f726c64"^..chunking 2 folded.base 16.to chr
--- "hello world"
+    it "failure" $
+      5 ^? only 4
+        ==> Nothing
 
--- >>> "00:00:00" & upon (tail.tail).partsOf (biplate.filtered (== '0')) .~ "1234"
--- "00:12:34"
+    it "has-filtered" $
+      has (traverse.filtered (== 5)) [1,2,3,4]
+        ==> False
 
--- >>> [Left (0,1),Right (1,2)] & traverse.failing (_Left._2) (_Right._2) .~ 5
--- [Left (0,5),Right (1,5)]
+    it "has-only" $
+      has (traverse.only 5) [1,2,3,4]
+        ==> False
 
+  describe "singular" $ do
+    it "_head-alone" $
+      [1,2,3] ^? _head
+        ==> Just 1
 
--- Getter 1 r
--- Setter 0+ w
--- Lens 1 rw
--- Iso entire rw
--- Traversal 0+ rw
--- Fold 0+ r
+    it "_head" $
+      [1,2,3] ^. singular _head
+        ==> 1
+
+traversalSet :: Spec
+traversalSet =
+  describe "contains" $ do
+    it "view" $
+      bag [1, 2, 3] ^. contains 2
+        ==> True
+
+    it "set" $
+      bag [1, 2, 3] & contains 2 .~ False
+        ==> bag [1, 3]
+
+traversalMap :: Spec
+traversalMap = do
+  describe "at" $ do
+    describe "view" $ do
+      it "present" $
+        alist [(1,"x"), (2,"y")] ^. at 1
+          ==> Just "x"
+
+      it "absent" $
+        alist [(1,"x"), (2,"y")] ^. at 3
+          ==> Nothing
+
+      it "non" $
+        alist [(1,"x"), (2,"y")]
+          ^. at 3.non "z"
+          ==> "z"
+
+    describe "set" $ do
+      it "positive" $
+        alist [(1,"x"), (2,"y")]
+          & at 1 .~ Just "z"
+          ==> alist [(1,"z"), (2,"y")]
+
+      it "negative" $
+        alist [(1,"x"), (2,"y")]
+          & at 1 .~ Nothing
+          ==> alist [(2,"y")]
+
+      it "sans" $
+        alist [(1,"x"), (2,"y")] & sans 1
+          ==> alist [(2,"y")]
+
+  describe "ix" $ do
+    describe "view" $ do
+      it "present" $
+        alist [(1,"x"), (2,"y")] ^? ix 1
+          ==> Just "x"
+
+      it "demand" $
+        alist [(1,"x"), (2,"y")] ^?! ix 1
+          ==> "x"
+
+      it "absent" $
+        alist [(1,"x"), (2,"y")] ^? ix 3
+          ==> Nothing
+
+      it "failing" $
+        alist [(1,"x"), (2,"y")]
+          ^? failing (ix 3) (ix 1)
+          ==> Just "x"
+
+      it "like" $
+        alist [(1,"x"), (2,"y")]
+          ^?! failing (ix 3) (like "z")
+          ==> "z"
+
+    describe "set" $ do
+      it "present" $
+        alist [(1,"x"), (2,"y")]
+          & ix 1 .~ "z"
+          ==> alist [(1,"z"), (2,"y")]
+
+      it "absent" $
+        alist [(1,"x"), (2,"y")]
+          & ix 3 .~ "z"
+          ==> alist [(1,"x"), (2,"y")]
+
+  describe "traverse" $ do
+    it "toListOf" $
+      alist [(1,"x"), (2,"y")] ^.. traverse
+        ==> ["x","y"]
+
+    it "withIndex" $
+      alist [(1,"x"), (2,"y")]
+        ^.. traversed.withIndex
+        ==> [(0,"x"),(1,"y")]
+
+  describe "itraversed" $
+    describe "indices" $ do
+      it "toListOf" $
+        alist [(1,"x"), (2,"y"), (4,"z")]
+          ^.. itraversed.indices even
+          ==> ["y", "z"]
+
+      it "withIndex" $
+        alist [(1,"x"), (2,"y")]
+          ^.. itraversed.withIndex
+          ==> [(1,"x"),(2,"y")]
+
+      it "indices" $
+        alist [(1,"x"), (2,"y"), (4,"z")]
+          & itraversed.indices even .~ "w"
+          ==> alist [(1,"x"),(2,"w"),(4,"w")]
+
+traversalComputations :: Spec
+traversalComputations =
+  describe "digit" $ do
+    it "getter" $
+      31415926 ^? digit 2
+        ==> Just 4
+
+    it "setter" $
+      31415926 & digit 2 .~ 8
+        ==> 31815926
+
+    it "setter-flexible" $
+      31415926 & digit 2 .~ 99
+        ==> 319915926
+
+traversalSimilar :: Spec
+traversalSimilar = do
+  it "like-fmap" $
+    [1,2,3,4] & mapped +~ 1
+      ==> [2,3,4,5]
+
+  it "still-like-fmap" $
+    ([1,2,3,4], 10) & mapped +~ 1
+      ==> ([1,2,3,4], 11)
+
+  it "not-like-fmap" $
+    ([1,2,3,4], 10) & _1.mapped +~ 1
+      ==> ([2,3,4,5], 10)
+
+  it "folded" $
+    [1,2,3,4] ^. folded.to Sum
+      ==> Sum 10
+
+  it "minimumOf" $
+    minimumOf (each.field2)
+      (Record 1 2,Record 3 4,Record 5 6)
+      ==> Just 2
+
+  it "sumOf" $
+    sumOf (each.field2)
+      (Record 1 2,Record 3 4,Record 5 6)
+      ==> 12
+
+  it "sequenceAOf" $
+    sequenceAOf _2 (1,"foo",2)
+      ==> [(1,'f',2),(1,'o',2),(1,'o',2)]
+
+lensState :: Spec
+lensState = do
+  it "use" $
+    use _1 `evalState` (10, 20)
+      ==> 10
+
+  it "uses" $
+    uses _1 negate `evalState` (10, 20)
+      ==> -10
+
+  it "preuse" $
+    preuse (ix 1) `evalState` [1, 2, 3, 4]
+      ==> Just 2
+
+  it "preuses" $
+    preuses (ix 1) negate
+      `evalState` [1, 2, 3, 4]
+      ==> Just (-2)
+
+  it "set" $
+    (ix 1 .= 5) `execState` [1, 2, 3, 4]
+      ==> [1, 5, 3, 4]
+
+  it "over" $
+    (ix 1 %= negate)
+      `execState` [1, 2, 3, 4]
+      ==> [1, -2, 3, 4]
+
+  it "setM" $
+    (ix 1 <~ pure 5) `execState` [1, 2, 3, 4]
+      ==> [1, 5, 3, 4]
+
+  it "zoom" $
+    zoom _1 (_2 .= 4) `execState` ((1, 2), 3)
+      ==> ((1, 4), 3)
+
+  it "multi-set-plain" $
+    ((1,2,3) & _1 .~ 10
+             & _2 .~ 20
+             & _3 .~ 30)
+      ==> (10,20,30)
+
+  it "multi-set" $
+    ((1,2,3) &~ do _1 .= 10
+                   _2 .= 20
+                   _3 .= 30)
+      ==> (10,20,30)
+
+advancedPartsOf :: Spec
+advancedPartsOf = do
+  it "indices" $
+    [2,4,1,5,3,6]
+      & partsOf (traversed.indices odd)
+      %~ reverse
+      ==> [2,6,1,5,3,4]
+
+  it "filtered" $
+    [2,4,1,5,3,6]
+      & partsOf (traverse.filtered (< 4))
+      %~ reverse.sort
+      ==> [3,4,2,5,1,6]
+
+  it "set" $
+    (3,1,2,4,5) & partsOf each %~ sort
+      ==> (1,2,3,4,5)
+
+  it "set" $
+    "Hello, World"
+      & partsOf (traverse.filtered isAlpha)
+      .~ "Howdy!!!"
+      ==> "Howdy, !!!ld"
+
+  it "indices" $
+    "00:00:00"
+      & partsOf (itraversed.
+                 indices (>= 3).
+                 filtered (== '0'))
+      .~ "1234"
+      ==> "00:12:34"
+
+advancedViewPatterns :: Spec
+advancedViewPatterns =
+  it "lambda" $
+    (\(view _2 -> Left x) -> x) (10, Left 20)
+      ==> 20
+
+advancedBiplate :: Spec
+advancedBiplate = do
+  it "strings" $
+    ((("foo", "bar"), "!", 2 :: Int, ())
+       ^.. biplate :: [String])
+      ==> ["foo","bar","!"]
+
+  it "ints" $
+    ((("foo", "bar"), "!", 2 :: Int, ())
+       ^.. biplate :: [Int])
+      ==> [2]
+
+  it "chars" $
+    ((("foo", "bar"), "!", 2 :: Int, ())
+       & biplate %~ toUpper)
+      ==> (("FOO","BAR"),"!",2,())
+
+  it "head" $
+    ((("foo","bar"),"!", 2 :: Int, ())
+       & (biplate :: Data s => Traversal' s String)._head
+       %~ toUpper)
+      ==> (("Foo","Bar"),"!",2,())
+
+  it "partsOf" $
+    (("foo","bar"),"!", 2 :: Int, ())
+      & partsOf biplate
+      %~ (reverse :: String -> String)
+      ==> (("!ra","boo"),"f",2,())
+
+  it "filtered" $
+    (("foo","bar"),"!", 2 :: Int, ())
+      & partsOf (biplate.filtered (<= 'm'))
+      %~ (reverse :: String -> String)
+      ==> (("!oo","abr"),"f",2,())
+
+-- Local Variables:
+-- haskell-indent-spaces: 2
+-- haskell-indentation-ifte-offset: 2
+-- haskell-indentation-layout-offset: 2
+-- haskell-indentation-left-offset: 2
+-- haskell-indentation-starter-offset: 2
+-- haskell-indentation-where-post-offset: 2
+-- haskell-indentation-where-pre-offset: 2
+-- End:
