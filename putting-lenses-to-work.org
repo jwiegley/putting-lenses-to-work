@@ -32,17 +32,11 @@ Lenses address some part of a "structure" that always exists
 *** view (^.)
 ### Lens.Tuple.view.operator
 *** view
-:PROPERTIES:
-:BEAMER_act: <2->
-:END:
 ### Lens.Tuple.view.function
 ** Tuple
 *** set (.~)
 ### Lens.Tuple.set.operator
 *** set
-:PROPERTIES:
-:BEAMER_act: <2->
-:END:
 ### Lens.Tuple.set.function
 ** Records
 - Possibly the least interesting use of =lens=
@@ -96,12 +90,9 @@ instance HasRecord Record where
 *** view
 ### Lens.records.view
 *** set
-:PROPERTIES:
-:BEAMER_act: <2->
-:END:
 ### Lens.records.set
 ** Records
-Record lenses become quite useful when structure is deep:
+Record lenses become quite useful when structure is deep
 ** Records
 *** With lens
 #+begin_src haskell
@@ -131,12 +122,11 @@ my_1 :: Functor f
 #+end_src
 ** Common operators
 \begin{center}
-\begin{tabular}{l|l}
+\begin{tabular}{l@{\hspace{1em}}|@{\hspace{1em}}l@{\hspace{2em}}}
 view       & \verb|v ^. l|     \\
 set        & \verb|v & l .~ x| \\
 (set Just) & \verb|v & l ?~ mx| \\
 (incr)     & \verb|v & l +~ n| \\
-(decr)     & \verb|v & l -~ n| \\
 (append)   & \verb|v & l <>~ x| \\
 (apply)    & \verb|v & l %~ f| \\
 (applyA)   & \verb|v & l %%~ f|
@@ -146,49 +136,85 @@ set        & \verb|v & l .~ x| \\
 ** Prism
 Prims address some part of a "structure" that *may* exist
 ** ADTs
+#+begin_src haskell
+{-# LANGUAGE TemplateHaskell #-}
+
+module Lenses where
+
+import Control.Lens
+
+data ADT = Alpha Int Int
+         | Beta Record
+         | Gamma String
+
+makePrisms ''ADT
+#+end_src
+** ADTs
+*** view (present)
+### Lens.ADTs.preview.present
+*** view (absent)
+### Lens.ADTs.preview.absent
+** ADTs
+*** set (present)
+### Lens.ADTs.setter.present
+*** set (absent)
+### Lens.ADTs.setter.absent
+** ADTs
+*** With lens
+#+begin_src haskell
+v & _Beta.field1 +~ 1
+#+end_src
+** ADTs
+*** Without lens
+#+begin_src haskell
+case v of
+  Beta z ->
+    Beta (z { _field1 = _field1 z + 1 })
+  _ -> v
+#+end_src
+** Writing prisms by hand
+#+begin_src haskell
+my_Left :: Prism' (Either Int Int) Int
+my_Left = prism' Left $
+  either Just (const Nothing)
+#+end_src
 * Traversal & Fold
 ** Traversals
-Traversals address many parts of a "structure" that may exist
+Traversals address many parts of a "structure" that *may* exist
 ** Collections
 *** preview
-#+begin_src haskell
-[1,2,3] ^? ix 1
-    ==> Just 2
-#+end_src
+### Traversal.List.preview
 *** set
-:PROPERTIES:
-:BEAMER_act: <2->
-:END:
-#+begin_src haskell
-[1,2,3] & ix 1 .~ 20
-    ==> [1,20,3]
-#+end_src
+### Traversal.List.set
 ** Computations
 *** preview
-#+begin_src haskell
-31415926 ^? digit 2
-    ==> Just 4
-#+end_src
+### Traversal.computations.digits.preview
 *** set
-:PROPERTIES:
-:BEAMER_act: <2->
-:END:
+### Traversal.computations.digits.set
+** Computations
 #+begin_src haskell
-31415926 & digit 2 .~ 8
-    ==> 31815926
+digits :: Iso' Int [Int]
+digits =
+  iso (map (read :: String -> Int)
+         . sequence . (:[]) . show)
+      ((read :: String -> Int)
+         . concatMap show)
 #+end_src
+** Computations
+*** set (flexible)
+### Traversal.computations.digits.set-flexible
 ** Monoids
 - "Viewing" a traversal combines the elements using =Monoid=
 - =^..= turns each element into a singleton list, so the =Monoid= result is a
   list of the elements
 ** Monoids
-*** Obtaining a list of elements
+*** A list of elements
 ### Traversal.List.toListOf
-*** Using the Monoid
-:PROPERTIES:
-:BEAMER_act: <2->
-:END:
+*** Using a Monoid
 ### Traversal.List.monoid
+** Folds
+*** allOf
+### Traversal.List.allOf
 ** Folds
 \begin{center}
 \small
@@ -236,56 +262,69 @@ Traversal & y?   & y?    & 0*      & \verb|traverse|
 \end{center}
 ** Common operators
 \begin{center}
-\begin{tabular}{l|l}
+\begin{tabular}{l@{\hspace{1em}}|@{\hspace{1em}}l@{\hspace{2em}}}
 toListOf & \verb|v ^.. l|    \\
 preview  & \verb|v ^? l|     \\
 (demand) & \verb|v ^?! l|
 \end{tabular}
 \end{center}
 * Map
-** Maps
-** at
-** non
-** failing
+** Map
+*** at (present)
+### Map.at.view.present
+*** at (absent)
+### Map.at.view.present
+** Map
+*** non (present)
+### Map.at.non.present
+*** non (absent)
+### Map.at.non.absent
+** Map
+*** ix view (present)
+### Map.ix.view.present
+*** ix view (absent)
+### Map.ix.view.absent
+** Map
+*** ix view (demand)
+### Map.ix.view.demand
+** Map
+*** ix set (present)
+### Map.ix.set.present
+*** ix set (absent)
+### Map.ix.set.absent
+** Map
+*** failing
+### Map.ix.view.present
 * State
 ** State
 *** use
 ### State.use
 *** uses
-:PROPERTIES:
-:BEAMER_act: <2->
-:END:
 ### State.uses
 ** State
 *** preuse
 ### State.preuse
 *** preuses
-:PROPERTIES:
-:BEAMER_act: <2->
-:END:
 ### State.preuses
 ** State
 *** set
 ### State.set
+*** set (monadic)
+### State.setM
 ** State
 *** over
 ### State.over
-** set (State
-*** set (monadic)
-### State.setM
 ** State
 *** zoom
 ### State.zoom
 ** Lens
-*** Multiple set
+*** multi-set
 ### State.multi-set-plain
-** State
-*** Multiple set
+** Lens
+*** stateful multi-set
 ### State.multi-set
 * Other
-** partsOf
-** biplate
-** Things we didn't cover
+** We didn't cover...
 \begin{center}
 \small
 \begin{tabular}{lll}
@@ -296,7 +335,42 @@ Arrays              & Vectors           & \verb|FilePath| \\
 \verb|Numeric.Lens| &                   &
 \end{tabular}
 \end{center}
-
+** partsOf
+*** indices
+### Advanced.partsOf.indices
+** partsOf
+*** filtered
+### Advanced.partsOf.filtered
+** partsOf
+*** each
+### Advanced.partsOf.each
+** partsOf
+*** set
+### Advanced.partsOf.set
+** partsOf
+*** multiple
+### Advanced.partsOf.multiple
+** ViewPatterns
+*** lambda
+### Advanced.view-patterns.lambda
+** biplate
+*** strings
+### Advanced.biplate.strings
+** biplate
+*** ints
+### Advanced.biplate.ints
+** biplate
+*** chars
+### Advanced.biplate.chars
+** biplate
+*** with partsOf
+### Advanced.biplate.partsOf
+** biplate
+*** filtered
+### Advanced.biplate.filtered
+** biplate
+*** head
+### Advanced.biplate.head
 * Colophon
 
 #+STARTUP: beamer
