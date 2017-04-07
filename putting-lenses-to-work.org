@@ -134,7 +134,7 @@ set        & \verb|v & l .~ x| \\
 \end{center}
 * Prism
 ** Prism
-Prims address some part of a "structure" that *may* exist
+Prisms address some part of a "structure" that *may* exist
 ** ADTs
 #+begin_src haskell
 {-# LANGUAGE TemplateHaskell #-}
