@@ -213,27 +213,25 @@ Traversals address many parts of a "structure" that may exist
 \verb|noneOf|       & \verb|notElemOf|   & \verb|notNullOf| \\
 \verb|nullOf|       & \verb|orOf|        & \verb|productOf| \\
 \verb|sequenceAOf_| & \verb|sequenceOf_| & \verb|sumOf|     \\
-\verb|toListOf|     & \verb|traverseOf_| & 
+\verb|toListOf|     & \verb|traverseOf_| &
 \end{tabular}
 \end{center}
 ** Vocabulary review
 \begin{center}
 \small
-\begin{tabular}{|l|l|l|l|l|}
-\hline
-  \textbf{Name} &
+\begin{tabular}{l|l|l|l|l}
+  \textbf{Class} &
   \textbf{Read} &
   \textbf{Write} &
-  \textbf{Targets} &
-  \textbf{Example} \\ \hline
-Getter    & y    &       & 1       & \verb|to f| \\ 
-Setter    &      & y?    & 0*      & \verb|mapped| \\ 
-Lens      & y    & y     & 1       & \verb|_1| \\ 
+  \textbf{Count} &
+  \textbf{Example} \\ \hline\hline
+Getter    & y    &       & 1       & \verb|to f| \\
+Lens      & y    & y     & 1       & \verb|_1| \\
 Iso       & y    & y     & 1       & \verb|lazy| \\ \hline
 Prism     & y?   & y?    & 1?      & \verb|only| \\ \hline
-Fold      & y*   &       & 0*      & \verb|folded| \\ 
-Traversal & y*   & y*    & 0*      & \verb|traverse| \\ 
-\hline
+Fold      & y?   &       & 0*      & \verb|folded| \\
+Setter    &      & y?    & 0*      & \verb|mapped| \\
+Traversal & y?   & y?    & 0*      & \verb|traverse|
 \end{tabular}
 \end{center}
 ** Common operators
@@ -295,7 +293,7 @@ preview  & \verb|v ^? l|     \\
 \verb|lens-action|  & \verb|lens-aeson| & \verb|thyme|    \\
 Indexed lenses      & Zippers           & Exceptions      \\
 Arrays              & Vectors           & \verb|FilePath| \\
-\verb|Numeric.Lens| &                   & 
+\verb|Numeric.Lens| &                   &
 \end{tabular}
 \end{center}
 
@@ -332,6 +330,8 @@ Arrays              & Vectors           & \verb|FilePath| \\
 #       '(("fontsize" "\\footnotesize")
 #         ("linenos" "true")))
 # #+end_src
+
+#+BEAMER_HEADER: \renewcommand{\arraystretch}{1.2}
 
 #+BEAMER_HEADER: \let\svthefootnote\thefootnote
 #+BEAMER_HEADER: \newcommand\blankfootnote[1]{%
