@@ -12,7 +12,7 @@ present: all
 	$(PYTHON) $(PRESENT) $(PDF)
 
 # Ensure all examples work before building the slide deck
-%.tex: %.org test/Main.hs putting-lenses-to-work.cabal Makefile
+%.tex: %.org Lenses.hs putting-lenses-to-work.cabal Makefile
 	cabal build
 	./dist/build/putting-lenses-to-work/putting-lenses-to-work
 	$(EMACS) -batch -L . -L ~/.emacs.d -l lenses \

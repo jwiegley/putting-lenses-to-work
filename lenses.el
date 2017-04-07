@@ -3,7 +3,7 @@
 (defun extract-code (name)
   "Where name has the form foo.bar.baz"
   (with-temp-buffer
-    (insert-file-contents-literally "test/Main.hs")
+    (insert-file-contents-literally "Lenses.hs")
 
     (let ((parts (split-string name "\\.")))
       (while parts
