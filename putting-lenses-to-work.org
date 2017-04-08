@@ -56,36 +56,36 @@ data Record = Record
   }
 makeLenses ''Record
 #+end_src
-** Records (Classy)
-=makeClassy= is an alternate lens builder that defines lenses as methods of a
-typeclass, making your record an instance of that class
-** Records (Classy)
-#+begin_src haskell
-{-# LANGUAGE TemplateHaskell #-}
+# ** Records (Classy)
+# =makeClassy= is an alternate lens builder that defines lenses as methods of a
+# typeclass, making your record an instance of that class
+# ** Records (Classy)
+# #+begin_src haskell
+# {-# LANGUAGE TemplateHaskell #-}
 
-module Lenses (Record, HasRecord(..)) where
+# module Lenses (Record, HasRecord(..)) where
 
-import Control.Lens
+# import Control.Lens
 
-data Record = Record
-  { _field1 :: Int
-  , _field2 :: Int
-  }
-makeClassy ''Record
-#+end_src
-** Records (Classy)
-#+begin_src haskell
-class HasRecord r where
-  record :: Lens' r Record
-  field1 :: Lens' r Int
-  field2 :: Lens' r Int
-  {-# MINIMAL record #-}
+# data Record = Record
+#   { _field1 :: Int
+#   , _field2 :: Int
+#   }
+# makeClassy ''Record
+# #+end_src
+# ** Records (Classy)
+# #+begin_src haskell
+# class HasRecord r where
+#   record :: Lens' r Record
+#   field1 :: Lens' r Int
+#   field2 :: Lens' r Int
+#   {-# MINIMAL record #-}
 
-instance HasRecord Record where
-  ...
-  field1 f (Record x y) = ...
-  ...
-#+end_src
+# instance HasRecord Record where
+#   ...
+#   field1 f (Record x y) = ...
+#   ...
+# #+end_src
 ** Records
 *** view
 ### Lens.records.view
@@ -191,15 +191,15 @@ Traversals address many parts of a "structure" that *may* exist
 ### Traversal.computations.digits.preview
 *** set
 ### Traversal.computations.digits.set
-** Computations
-#+begin_src haskell
-digits :: Iso' Int [Int]
-digits =
-  iso (map (read :: String -> Int)
-         . sequence . (:[]) . show)
-      ((read :: String -> Int)
-         . concatMap show)
-#+end_src
+# ** Computations
+# #+begin_src haskell
+# digits :: Iso' Int [Int]
+# digits =
+#   iso (map (read :: String -> Int)
+#          . sequence . (:[]) . show)
+#       ((read :: String -> Int)
+#          . concatMap show)
+# #+end_src
 ** Computations
 *** set (flexible)
 ### Traversal.computations.digits.set-flexible
@@ -208,10 +208,10 @@ digits =
 - =^..= turns each element into a singleton list, so the =Monoid= result is a
   list of the elements
 ** Monoids
+*** Monoid
+### Traversal.List.monoid
 *** A list of elements
 ### Traversal.List.toListOf
-*** Using a Monoid
-### Traversal.List.monoid
 ** Folds
 *** allOf
 ### Traversal.List.allOf
@@ -273,7 +273,7 @@ preview  & \verb|v ^? l|     \\
 *** at (present)
 ### Map.at.view.present
 *** at (absent)
-### Map.at.view.present
+### Map.at.view.absent
 ** Map
 *** non (present)
 ### Map.at.non.present
@@ -294,7 +294,7 @@ preview  & \verb|v ^? l|     \\
 ### Map.ix.set.absent
 ** Map
 *** failing
-### Map.ix.view.present
+### Map.ix.view.failing
 * State
 ** State
 *** use
